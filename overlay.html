@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <title>DJMAX DJ CLASS Overlay</title>
@@ -7,7 +8,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700;900&display=swap');
 
         body {
-            background-color: transparent; 
+            background-color: transparent;
             margin: 0;
             padding: 15px;
             overflow: hidden;
@@ -18,12 +19,12 @@
         .main-box {
             display: inline-flex;
             flex-direction: column;
-            background: rgba(50, 50, 50, 0.85); 
+            background: rgba(50, 50, 50, 0.85);
             padding: 15px 25px;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             gap: 8px;
-            border: 4px solid transparent; 
+            border: 4px solid transparent;
             transition: all 0.3s ease;
             box-sizing: border-box;
         }
@@ -66,7 +67,7 @@
         }
 
         .label {
-            color: #A0D0FF; 
+            color: #A0D0FF;
         }
 
         .value {
@@ -85,29 +86,31 @@
         @keyframes border-flash-heavy {
             0% {
                 border-color: transparent;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             }
+
             15% {
-                border-color: rgba(173, 255, 47, 1); 
-                
-                box-shadow: 
-                    0 0 15px rgba(173, 255, 47, 0.9), 
-                    0 0 30px rgba(173, 255, 47, 0.7), 
+                border-color: rgba(173, 255, 47, 1);
+
+                box-shadow:
+                    0 0 15px rgba(173, 255, 47, 0.9),
+                    0 0 30px rgba(173, 255, 47, 0.7),
                     0 0 60px rgba(173, 255, 47, 0.4),
                     inset 0 0 15px rgba(173, 255, 47, 0.5);
-                    
+
                 transform: scale(1.03);
             }
+
             100% {
                 border-color: transparent;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
                 transform: scale(1);
             }
         }
     </style>
 </head>
-<body>
 
+<body>
     <div id="main-container" class="main-box">
         <div class="header-container">
             <div id="nickname-text" class="nickname">Loading...</div>
@@ -119,30 +122,76 @@
             <span class="label">POWER:</span>
             <span id="power-display" class="power-value">-</span>
         </div>
+        <div class="info-row">
+            <small>
+                <span class="label">NEXT:</span>
+                <span id="next-class-display" class="value">-</span>
+                (<span class="label">TARGET:</span>
+                <span id="next-power-display" class="power-value">-</span>)
+            </small>
+        </div>
     </div>
 
     <script>
-        const NICKNAME = '뉴김편집'; 
-        const BUTTON = '8';        
-        const UPDATE_INTERVAL = 60000; 
-        
+        const DJCLASS = {
+            'emblems': ['BEGINNER', 'TRAINEE', 'AMATEUR', 'ROOKIE', 'STREET DJ', 'MIDDLEMAN', 'PRO DJ', 'HIGH CLASS', 'PROFESSIONAL',
+                'TREND SETTER', 'HEADLINER', 'SHOWSTOPPER', 'BEAT MAESTRO', 'THE LORD OF DJMAX'],
+            'tierSeperators': ['IV', 'III', 'II', 'I'],
+            'borders': [[0, 0, 0, 0],
+            [500, 1000, 1500, 2000],
+            [2400, 2800, 3200, 3600],
+            [4000, 4300, 4600, 4900],
+            [5200, 5500, 5800, 6000],
+            [6200, 6400, 6600, 6800],
+            [7000, 7200, 7400, 7600],
+            [7800, 8000, 8200, 8400],
+            [8600, 8700, 8800, 8900],
+            [9000, 9100, 9200, 9300],
+            [9400, 9500, 9600, 9650],
+            [9700, 9750, 9800, 9850],
+            [9900, 9930, 9950, 9970],
+            [9980, 9980, 9980, 9980]],
+            'noseperate': [true, false, false, false, false, false, false, false, false, false, false, false, false, true]
+        };
+        const NICKNAME = '뉴김편집';
+        const BUTTON = '8';
+        const UPDATE_INTERVAL = 60000;
+
         let lastPower = 0;
 
         async function updateStats() {
             const url = `https://v-archive.net/api/v2/archive/${encodeURIComponent(NICKNAME)}/djClass/${BUTTON}`;
-            
+
             try {
                 const response = await fetch(url);
                 const data = await response.json();
 
                 if (data.success) {
+                    if (data.djClass !== 'THE LORD OF DJMAX') {
+                        if (data.djClass === 'BEGINNER') this.THISCLASS = ['BEGINNER', 'I'];
+                        else this.THISCLASS = [data.djClass.slice(0, data.djClass.lastIndexOf(' ')), data.djClass.slice(data.djClass.lastIndexOf(' ') + 1)]
+                        if (this.THISCLASS[1] === 'I') this.NEXTCLASS = [DJCLASS.emblems[DJCLASS.emblems.indexOf(this.THISCLASS[0]) + 1], 'IV']
+                        else this.NEXTCLASS = [this.THISCLASS[0], DJCLASS.tierSeperators[DJCLASS.tierSeperators.indexOf(this.THISCLASS[1]) + 1]]
+                        if (this.NEXTCLASS[0] === 'THE LORD OF DJMAX') {
+                            this.NEXTCLASS[1] = ''
+                            this.NEXTBORDER = DJCLASS.borders[DJCLASS.emblems.indexOf(this.NEXTCLASS[0])][0]
+                        } else {
+                            this.NEXTBORDER = DJCLASS.borders[DJCLASS.emblems.indexOf(this.NEXTCLASS[0])][DJCLASS.tierSeperators.indexOf(this.NEXTCLASS[1])]
+                        }
+                    } else {
+                        this.NEXTCLASS = ['-', '']
+                        this.NEXTBORDER = '-'
+                    }
                     const currentPower = parseFloat(data.djPowerConversion);
-                    
+
                     document.getElementById('nickname-text').innerText = NICKNAME;
                     document.getElementById('button-badge').innerText = `${BUTTON}B`;
                     document.getElementById('class-display').innerText = data.djClass;
-                    
+
                     document.getElementById('power-display').innerText = currentPower.toFixed(4);
+
+                    document.getElementById('next-class-display').innerText = `${this.NEXTCLASS[0]} ${this.NEXTCLASS[1]}`.trim() ?? '-'
+                    document.getElementById('next-power-display').innerText = parseFloat(this.NEXTBORDER).toFixed(4) ?? '-'
 
                     if (lastPower > 0 && currentPower > lastPower) {
                         triggerBoxGlow();
@@ -169,4 +218,5 @@
         setInterval(updateStats, UPDATE_INTERVAL);
     </script>
 </body>
+
 </html>
